@@ -7,9 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")] // https://localhost:5001/api/products
-    [ApiController]
-    public class ProductsController(StoreContext context) : ControllerBase
+    public class ProductsController(StoreContext context) : BaseApiController
     {
 
         [HttpGet]
@@ -29,7 +27,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-                public string AddProduct()
+        public string AddProduct()
         {
             return "Product added";
         }
