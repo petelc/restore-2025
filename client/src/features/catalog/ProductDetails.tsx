@@ -13,12 +13,50 @@ import {
   TableCell,
 } from '@mui/material';
 import { useFetchProductDetailsQuery } from './catalogApi';
+import {
+  useAddBasketItemMutation,
+  useFetchBasketQuery,
+  useRemoveBasketItemMutation,
+} from '../basket/basketApi';
+import { useEffect, useState } from 'react';
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const [removeBasketItem] = useRemoveBasketItemMutation();
+  const [addBasketItem] = useAddBasketItemMutation();
+  const { data: basket } = useFetchBasketQuery();
   const { data: product, isLoading } = useFetchProductDetailsQuery(Number(id));
+  const [quantity, setQuantity] = useState(0);
+
+  const item = basket?.items.find((item) => item.productId === Number(id));
+
+  useEffect(() => {
+    if (item) {
+      setQuantity(item.quantity);
+    }
+  }, [item]);
 
   if (isLoading || !product) return <div>Loading...</div>;
+
+  const handleUpdateBasket = () => {
+    const updatedQuantity = item
+      ? Math.abs(quantity - item.quantity)
+      : quantity;
+
+    if (!item || quantity > item.quantity) {
+      addBasketItem({
+        product,
+        quantity: updatedQuantity,
+      });
+    } else {
+      removeBasketItem({ productId: product.id, quantity: updatedQuantity });
+    }
+  };
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(event.target.value);
+    if (value >= 0) setQuantity(value);
+  };
 
   const productDetails = [
     { label: 'Name', value: product.name },
@@ -68,18 +106,23 @@ export default function ProductDetails() {
               type='number'
               label='Quantity in basket'
               fullWidth
-              defaultValue={1}
+              value={quantity}
+              onChange={handleInputChange}
             />
           </Grid>
           <Grid size={6}>
             <Button
+              onClick={handleUpdateBasket}
+              disabled={
+                quantity === item?.quantity || (!item && quantity === 0)
+              }
               variant='contained'
               color='primary'
               size='large'
               fullWidth
               sx={{ height: '55px' }}
             >
-              Add to Basket
+              {item ? 'Update Basket' : 'Add to Basket'}
             </Button>
           </Grid>
         </Grid>
